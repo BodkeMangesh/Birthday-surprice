@@ -1,0 +1,1208 @@
+/* =====================================================
+   BIRTHDAY SURPRISE: style.css
+   Edit the colors and fonts in :root to restyle everything.
+   ===================================================== */
+
+/* ---------- 1. THEME VARIABLES ---------- */
+:root {
+  --bg: #12061f; /* page background (deep purple-black) */
+  --purple-deep: #1a0b2e;
+  --purple: #4b1d6e;
+  --pink: #ff9ec7; /* soft pink */
+  --rose: #e8557f; /* rose */
+  --gold: #e8c98a; /* subtle gold highlight */
+  --text: #fdf6fb; /* white text */
+  --text-soft: rgba(253, 246, 251, 0.72);
+
+  --glass-bg: rgba(255, 255, 255, 0.07);
+  --glass-edge: linear-gradient(
+    135deg,
+    rgba(255, 158, 199, 0.6),
+    rgba(232, 201, 138, 0.35),
+    rgba(139, 92, 246, 0.4)
+  );
+
+  --font-heading: "Playfair Display", Georgia, serif;
+  --font-body: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-script: "Dancing Script", "Segoe Script", cursive;
+
+  --radius: 20px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ---------- 2. RESET + BASE ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+} /* makes the "hidden" attribute always win */
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 300;
+  line-height: 1.6;
+  overflow-x: clip; /* no horizontal scrolling, ever */
+  -webkit-font-smoothing: antialiased;
+}
+body.is-locked {
+  overflow: hidden;
+} /* JS removes this after the intro */
+
+img {
+  max-width: 100%;
+  display: block;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+::selection {
+  background: var(--rose);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* ---------- 3. BACKGROUND LAYERS ---------- */
+/* Slowly drifting colored glows behind everything */
+.bg-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    var(--purple-deep),
+    var(--bg) 70%
+  );
+}
+.bg-glow::before,
+.bg-glow::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  will-change: transform;
+}
+.bg-glow::before {
+  width: 60vmax;
+  height: 60vmax;
+  left: -20vmax;
+  top: -15vmax;
+  background: radial-gradient(circle, var(--rose), transparent 65%);
+  animation: drift 26s ease-in-out infinite alternate;
+}
+.bg-glow::after {
+  width: 55vmax;
+  height: 55vmax;
+  right: -20vmax;
+  bottom: -20vmax;
+  background: radial-gradient(circle, var(--purple), transparent 65%);
+  animation: drift 32s ease-in-out infinite alternate-reverse;
+}
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(8vmax, 6vmax, 0) scale(1.15);
+  }
+}
+
+#particles,
+#confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+#particles {
+  z-index: 1;
+}
+#confetti {
+  z-index: 63;
+}
+
+/* Floating hearts (JS creates .heart elements and sets --x, --size, --dur) */
+#hearts-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 62;
+  pointer-events: none;
+  overflow: hidden;
+}
+.heart {
+  position: absolute;
+  left: var(--x, 50%);
+  bottom: -3rem;
+  font-size: var(--size, 1.6rem);
+  opacity: 0;
+  filter: drop-shadow(0 0 8px rgba(255, 120, 170, 0.7));
+  animation: floatUp var(--dur, 7s) ease-in forwards;
+  will-change: transform, opacity;
+}
+@keyframes floatUp {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(var(--drift, 30px), -110vh, 0) scale(1.1)
+      rotate(15deg);
+    opacity: 0;
+  }
+}
+
+/* ---------- 4. FULL-SCREEN "SCREENS" (opening / intro / final) ---------- */
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--safe-top) + 1.5rem) 1.5rem
+    calc(var(--safe-bottom) + 1.5rem);
+  text-align: center;
+}
+
+/* ---------- 5. OPENING ---------- */
+.opening-lines {
+  display: grid;
+  gap: 1.1rem;
+  min-height: 11rem;
+  align-content: start;
+  max-width: 34rem;
+}
+.type-line {
+  font-family: var(--font-heading);
+  font-size: clamp(1.25rem, 4.6vw, 1.9rem);
+  line-height: 1.4;
+  text-wrap: balance;
+  min-height: 1.4em;
+}
+.type-line.big {
+  font-size: clamp(2rem, 8vw, 3.4rem);
+  font-weight: 700;
+}
+.type-line.is-typing::after {
+  /* blinking caret while typing */
+  content: "|";
+  margin-left: 2px;
+  color: var(--pink);
+  animation: blink 0.8s steps(1) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.opening-cta {
+  margin-top: 2rem;
+  display: grid;
+  gap: 1.4rem;
+  justify-items: center;
+  animation: fadeUp 1.2s ease both;
+}
+.ask {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: clamp(1.15rem, 4vw, 1.5rem);
+  color: var(--gold);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- 5b. GATE (locked countdown before the birthday) ---------- */
+.gate-inner {
+  display: grid;
+  gap: 1.6rem;
+  justify-items: center;
+  animation: fadeUp 1s ease both;
+}
+
+/* ---------- 5c. TEASE POPUP (midnight wishes) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--safe-top) + 1rem) 1.25rem calc(var(--safe-bottom) + 1rem);
+  background: rgba(8, 2, 16, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeIn 0.5s ease both;
+}
+.modal-card {
+  width: min(100%, 460px);
+  padding: clamp(1.6rem, 6vw, 2.4rem);
+  text-align: center;
+  animation: cardIn 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.modal-emoji {
+  font-size: 2.6rem;
+  margin-bottom: 0.6rem;
+}
+.modal-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.4rem, 5vw, 1.9rem);
+  line-height: 1.3;
+  margin-bottom: 0.9rem;
+  text-wrap: balance;
+}
+.modal-wish {
+  color: var(--text-soft);
+  font-size: 0.98rem;
+  line-height: 1.7;
+  margin-bottom: 1.6rem;
+}
+
+/* ---------- 5d. PROMISE (playful yes/no question) ---------- */
+.promise-box {
+  display: grid;
+  gap: 1.6rem;
+  justify-items: center;
+  max-width: 36rem;
+  animation: fadeUp 1s ease both;
+}
+.promise-question {
+  font-family: var(--font-heading);
+  font-size: clamp(1.3rem, 4.6vw, 1.9rem);
+  line-height: 1.5;
+  text-wrap: balance;
+}
+.promise-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  position: relative;
+}
+#promise-no.is-dodging {
+  position: fixed;
+  z-index: 95;
+  transition:
+    left 0.25s ease,
+    top 0.25s ease;
+}
+.promise-hint {
+  min-height: 1.4em;
+  color: var(--gold);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* ---------- 6. BUTTONS ---------- */
+.btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 48px;
+  padding: 0.9rem 2rem;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font: 500 1rem/1.2 var(--font-body);
+  color: #fff;
+  letter-spacing: 0.02em;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.3s ease,
+    background 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-glow {
+  background: linear-gradient(135deg, var(--rose), #b0347f 55%, var(--purple));
+  box-shadow:
+    0 0 18px rgba(232, 85, 127, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: pulseGlow 2.8s ease-in-out infinite;
+}
+.btn-glow::before {
+  /* light sweep on hover */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.7s ease;
+}
+@media (hover: hover) {
+  .btn-glow:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow:
+      0 0 34px rgba(255, 120, 170, 0.85),
+      0 12px 30px rgba(0, 0, 0, 0.4);
+  }
+  .btn-glow:hover::before {
+    transform: translateX(120%);
+  }
+  .btn-soft:hover {
+    background: rgba(255, 255, 255, 0.16);
+    transform: translateY(-2px);
+  }
+}
+@keyframes pulseGlow {
+  50% {
+    box-shadow:
+      0 0 30px rgba(255, 130, 175, 0.75),
+      0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+.btn-large {
+  font-size: clamp(1.1rem, 4vw, 1.4rem);
+  padding: 1.15rem 2.6rem;
+  min-height: 60px;
+}
+
+.btn-soft {
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 158, 199, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Click ripple (JS adds a <span class="ripple"> inside the button) */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  background: rgba(255, 255, 255, 0.55);
+  animation: ripple 0.6s ease-out forwards;
+}
+@keyframes ripple {
+  to {
+    transform: scale(14);
+    opacity: 0;
+  }
+}
+
+/* Subtle skip / back buttons */
+.btn-skip {
+  position: absolute;
+  right: 1rem;
+  bottom: calc(var(--safe-bottom) + 1rem);
+  min-height: 44px;
+  padding: 0.5rem 1.1rem;
+  background: transparent;
+  color: var(--text-soft);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  font: 400 0.85rem var(--font-body);
+  cursor: pointer;
+  opacity: 0.7;
+  transition:
+    opacity 0.25s,
+    background 0.25s;
+}
+.btn-skip:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ---------- 7. INTRO SEQUENCE ---------- */
+/* All lines share one grid cell and fade in/out on top of each other */
+.intro-stage,
+.final-stage {
+  display: grid;
+  place-items: center;
+  width: min(92vw, 780px);
+}
+.intro-line,
+.final-line {
+  grid-area: 1 / 1;
+  opacity: 0;
+  pointer-events: none;
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 6vw, 2.8rem);
+  line-height: 1.35;
+  text-wrap: balance;
+  transform: scale(1.08);
+  filter: blur(6px);
+  transition:
+    opacity 1s ease,
+    transform 3s ease-out,
+    filter 1s ease;
+}
+.intro-line.is-active,
+.final-line.is-shown {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+}
+.zoom-word {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 1.3em;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 24px rgba(232, 201, 138, 0.7);
+}
+.intro-line.is-active .zoom-word {
+  animation: zoomIn 3s ease-out both;
+}
+@keyframes zoomIn {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ---------- 8. FLOATING NAV + MUSIC BUTTON ---------- */
+.floating-nav {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  translate: -50% 0;
+  bottom: calc(var(--safe-bottom) + 0.75rem);
+  display: flex;
+  gap: 0.1rem;
+  max-width: calc(100vw - 1rem);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background: rgba(26, 11, 46, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 1s ease both;
+}
+.floating-nav::-webkit-scrollbar {
+  display: none;
+}
+.floating-nav a {
+  display: grid;
+  place-items: center;
+  min-height: 40px;
+  padding: 0 0.7rem;
+  color: var(--text-soft);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 400;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+.floating-nav a:hover,
+.floating-nav a.is-current {
+  background: rgba(255, 158, 199, 0.22);
+  color: #fff;
+}
+
+.music-btn {
+  position: fixed;
+  z-index: 45;
+  right: 0.9rem;
+  top: calc(var(--safe-top) + 0.9rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  color: #fff;
+  font: 400 0.85rem var(--font-body);
+  cursor: pointer;
+  background: rgba(26, 11, 46, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    background 0.25s,
+    box-shadow 0.25s;
+}
+.music-btn.is-playing {
+  background: rgba(232, 85, 127, 0.35);
+  box-shadow: 0 0 16px rgba(255, 130, 175, 0.6);
+}
+.music-btn.is-playing .music-icon {
+  display: inline-block;
+  animation: bounce 1s ease-in-out infinite;
+}
+@keyframes bounce {
+  50% {
+    transform: translateY(-3px) rotate(-10deg);
+  }
+}
+
+@media (min-width: 768px) {
+  /* on larger screens the nav sits at the top */
+  .floating-nav {
+    bottom: auto;
+    top: calc(var(--safe-top) + 0.9rem);
+  }
+  .floating-nav a {
+    font-size: 0.85rem;
+    padding: 0 1.1rem;
+  }
+}
+
+/* ---------- 9. SECTIONS (shared) ---------- */
+#site {
+  position: relative;
+  z-index: 2;
+}
+.section {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: clamp(4rem, 10vw, 7rem) 1.25rem;
+  scroll-margin-top: 1rem;
+}
+.section-title {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  text-align: center;
+  text-wrap: balance;
+  font-size: clamp(1.7rem, 5.5vw, 2.9rem);
+  line-height: 1.25;
+  margin-bottom: clamp(2rem, 6vw, 3.5rem);
+}
+
+/* Glass card with a gradient border */
+.glass {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(rgba(30, 12, 52, 0.72), rgba(30, 12, 52, 0.72)) padding-box,
+    var(--glass-edge) border-box;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    0 0 30px rgba(232, 85, 127, 0.08);
+}
+
+/* Scroll reveal (JS adds .in-view). Uses "translate" so it never fights rotations */
+.reveal {
+  opacity: 0;
+  translate: 0 28px;
+  transition:
+    opacity 0.9s ease,
+    translate 0.9s ease;
+}
+.reveal.in-view {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* ---------- 10. HERO + COUNTDOWN ---------- */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  gap: 0.4rem;
+}
+.script {
+  font-family: var(--font-script);
+  font-size: clamp(2.2rem, 8vw, 3.6rem);
+  color: var(--gold);
+}
+.hero-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  font-size: clamp(2.6rem, 12vw, 6.5rem);
+  background: linear-gradient(180deg, #fff 30%, var(--pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 24px rgba(255, 130, 175, 0.35));
+}
+.hero-date {
+  letter-spacing: 0.22em;
+  color: var(--text-soft);
+  font-size: clamp(0.85rem, 3vw, 1rem);
+  margin-top: 0.3rem;
+}
+
+.countdown {
+  margin-top: 2.2rem;
+  padding: 1.4rem clamp(1rem, 4vw, 2rem);
+  width: min(100%, 520px);
+}
+.countdown-title {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: clamp(1rem, 3.6vw, 1.25rem);
+  margin-bottom: 1rem;
+}
+.countdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(0.4rem, 2vw, 0.9rem);
+}
+.time-box {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.7rem 0.2rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.time-box span {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 7vw, 2.4rem);
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.time-box small {
+  font-size: 0.7rem;
+  color: var(--text-soft);
+  letter-spacing: 0.06em;
+}
+
+.countdown.is-today {
+  box-shadow: 0 0 40px rgba(255, 130, 175, 0.45);
+} /* JS adds this on the day */
+.countdown.is-today .countdown-title {
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  font-style: normal;
+  margin: 0;
+  color: var(--gold);
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: calc(var(--safe-bottom) + 4.6rem);
+  left: 50%;
+  translate: -50% 0;
+  color: var(--text-soft);
+  text-decoration: none;
+  font-size: 1.5rem;
+  animation: nudge 2s ease-in-out infinite;
+}
+@keyframes nudge {
+  50% {
+    transform: translateY(8px);
+  }
+}
+@media (min-width: 768px) {
+  .scroll-hint {
+    bottom: 2rem;
+  }
+}
+
+/* ---------- 11. POLAROID GALLERY ---------- */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.6rem 1.4rem;
+}
+.polaroid {
+  margin: 0;
+  width: 260px;
+  rotate: var(--rot, 0deg);
+  transition:
+    opacity 0.9s ease,
+    translate 0.9s ease,
+    rotate 0.35s ease,
+    scale 0.35s ease;
+}
+/* Slight rotations and offsets so it doesn't feel like a grid */
+.polaroid:nth-child(1) {
+  --rot: -4deg;
+}
+.polaroid:nth-child(2) {
+  --rot: 3deg;
+  margin-top: 1.5rem;
+}
+.polaroid:nth-child(3) {
+  --rot: -2deg;
+}
+.polaroid:nth-child(4) {
+  --rot: 4deg;
+  margin-top: 1.2rem;
+}
+.polaroid:nth-child(5) {
+  --rot: -3deg;
+}
+.polaroid:nth-child(6) {
+  --rot: 2deg;
+  margin-top: 1.5rem;
+}
+
+.polaroid-btn {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.7rem 0.4rem;
+  border: 0;
+  cursor: pointer;
+  background: #fdf8f5;
+  color: #4a2b52;
+  border-radius: 4px;
+  text-align: center;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  -webkit-tap-highlight-color: transparent;
+}
+.polaroid-img {
+  display: block;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 2px;
+  background: linear-gradient(
+    135deg,
+    #f3d3e4,
+    #cdb4e8
+  ); /* shows if a photo is missing */
+}
+.polaroid-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: scale 0.6s ease;
+  color: #4a2b52;
+  font-size: 0.8rem;
+}
+.polaroid figcaption {
+  font-family: var(--font-script);
+  font-size: 1.35rem;
+  line-height: 1.3;
+  padding: 0.6rem 0.2rem 0.3rem;
+  color: #4a2b52;
+}
+@media (hover: hover) {
+  .polaroid:hover {
+    rotate: 0deg;
+    scale: 1.06;
+    z-index: 3;
+  }
+  .polaroid:hover .polaroid-img img {
+    scale: 1.12;
+  }
+}
+
+/* ---------- 12. MEMORY TIMELINE ---------- */
+.timeline {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  position: relative;
+  max-width: 940px;
+}
+.timeline::before {
+  /* the vertical line */
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  translate: -50% 0;
+  background: linear-gradient(var(--pink), var(--gold), transparent);
+  opacity: 0.6;
+}
+.memory {
+  position: relative;
+  width: calc(50% - 2.2rem);
+  padding: 1.5rem 1.4rem 1.4rem;
+  margin-bottom: 2.4rem;
+}
+.memory:nth-child(even) {
+  margin-left: auto;
+}
+.memory::before {
+  /* little washi-tape strip = scrapbook feel */
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 76px;
+  height: 20px;
+  translate: -50% 0;
+  rotate: -3deg;
+  background: rgba(232, 201, 138, 0.45);
+  border-radius: 2px;
+}
+.memory::after {
+  /* dot on the timeline line */
+  content: "";
+  position: absolute;
+  top: 2rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow:
+    0 0 0 4px rgba(232, 85, 127, 0.3),
+    0 0 14px var(--rose);
+  right: calc(-2.2rem - 7px);
+}
+.memory:nth-child(even)::after {
+  right: auto;
+  left: calc(-2.2rem - 7px);
+}
+
+.memory-tag {
+  display: inline-block;
+  margin-bottom: 0.6rem;
+  padding: 0.15rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: var(--gold);
+  border: 1px solid rgba(232, 201, 138, 0.5);
+}
+.memory h3 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 1.3rem;
+  margin-bottom: 0.4rem;
+}
+.memory p {
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+.memory-photo {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  margin-top: 1rem;
+  rotate: -1.5deg;
+  border: 6px solid #fdf8f5;
+  border-radius: 3px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.4);
+}
+.memory:nth-child(even) .memory-photo {
+  rotate: 1.5deg;
+}
+
+/* ---------- 13. SPECIAL MESSAGE ---------- */
+.letter {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 2.8rem);
+  text-align: center;
+}
+.handwritten {
+  font-family: var(--font-script);
+  font-size: clamp(1.4rem, 4.6vw, 1.85rem);
+  line-height: 1.6;
+  margin-bottom: 1.1rem;
+}
+.signature {
+  text-align: right;
+  color: var(--gold);
+  margin-bottom: 0;
+}
+
+/* Smooth "Read More" reveal: grid row animates from 0fr to 1fr */
+.letter-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.9s ease,
+    opacity 0.9s ease;
+}
+.letter-more-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.letter-more.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-bottom: 1.4rem;
+}
+
+/* ---------- 14. SURPRISE + BIRTHDAY CARD ---------- */
+#surprise {
+  text-align: center;
+}
+.birthday-card {
+  max-width: 640px;
+  margin: 3rem auto 0;
+  padding: clamp(1.6rem, 6vw, 3rem);
+  animation: cardIn 1.2s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9) rotate(-2deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(1.7rem, 6vw, 2.6rem);
+  line-height: 1.25;
+  margin-bottom: 1.4rem;
+  text-wrap: balance;
+}
+.card-wish {
+  font-size: clamp(1rem, 3.4vw, 1.12rem);
+  line-height: 1.95;
+  color: var(--text-soft);
+  margin-bottom: 1.6rem;
+}
+.card-closing {
+  font-family: var(--font-script);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.5;
+  color: var(--gold);
+}
+
+.final-teaser {
+  margin-top: 3rem;
+  display: grid;
+  gap: 1.2rem;
+  justify-items: center;
+  animation: fadeUp 1.2s ease both;
+}
+.final-teaser p {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: clamp(1.2rem, 4vw, 1.6rem);
+}
+
+.site-footer {
+  text-align: center;
+  padding: 2rem 1rem calc(6rem + var(--safe-bottom));
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+/* ---------- 15. FINAL FULL-SCREEN REVEAL ---------- */
+.final-screen {
+  z-index: 60;
+  background: rgba(12, 4, 24, 0.94);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 1s ease both;
+}
+.final-line {
+  transition-duration: 1.4s, 3.5s, 1.4s;
+}
+.final-line.final-last {
+  font-size: clamp(1.8rem, 7vw, 3.2rem);
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(232, 201, 138, 0.6);
+}
+.final-screen .btn-skip {
+  right: 50%;
+  translate: 50% 0;
+  opacity: 1;
+  animation: fadeIn 1s ease both;
+}
+
+/* ---------- 16. LIGHTBOX ---------- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--safe-top) + 1rem) 1rem calc(var(--safe-bottom) + 1rem);
+  background: rgba(8, 2, 16, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeIn 0.3s ease both;
+}
+.lb-figure {
+  margin: 0;
+  max-width: min(90vw, 900px);
+  text-align: center;
+}
+.lb-figure img {
+  max-height: 72svh;
+  width: auto;
+  margin: 0 auto;
+  border-radius: 6px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: cardIn 0.5s ease both;
+}
+.lb-figure figcaption {
+  font-family: var(--font-script);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  margin-top: 1rem;
+  color: var(--gold);
+}
+.lb-btn {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 1.7rem;
+  line-height: 1;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition:
+    background 0.25s,
+    transform 0.25s;
+}
+.lb-btn:hover {
+  background: rgba(255, 158, 199, 0.35);
+}
+.lb-btn:active {
+  transform: scale(0.92);
+}
+.lb-close {
+  top: calc(var(--safe-top) + 0.9rem);
+  right: 0.9rem;
+  font-size: 1.2rem;
+}
+.lb-prev,
+.lb-next {
+  top: 50%;
+  translate: 0 -50%;
+}
+.lb-prev {
+  left: 0.9rem;
+}
+.lb-next {
+  right: 0.9rem;
+}
+
+/* ---------- 17. RESPONSIVE ---------- */
+/* Tablet and below: timeline becomes a single column */
+@media (max-width: 767px) {
+  .timeline::before {
+    left: 10px;
+    translate: 0 0;
+  }
+  .memory,
+  .memory:nth-child(even) {
+    width: auto;
+    margin-left: 2.4rem;
+    margin-right: 0;
+  }
+  .memory::after,
+  .memory:nth-child(even)::after {
+    right: auto;
+    left: calc(-2.4rem + 3px);
+  }
+  .memory::before {
+    left: 2.2rem;
+  }
+}
+/* Phones: 2 polaroids per row, nav and lightbox buttons adapt */
+@media (max-width: 600px) {
+  .gallery {
+    gap: 1.2rem 0.9rem;
+  }
+  .polaroid {
+    width: calc(50% - 0.5rem);
+  }
+  .polaroid-btn {
+    padding: 0.45rem 0.45rem 0.25rem;
+  }
+  .polaroid figcaption {
+    font-size: 1.05rem;
+  }
+  .lb-prev,
+  .lb-next {
+    top: auto;
+    bottom: calc(var(--safe-bottom) + 1.2rem);
+    translate: 0 0;
+  }
+  .lb-prev {
+    left: 24%;
+  }
+  .lb-next {
+    right: 24%;
+  }
+  .lb-figure img {
+    max-height: 62svh;
+  }
+}
+
+/* ---------- 18. ACCESSIBILITY: REDUCED MOTION ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .heart {
+    display: none;
+  }
+}

@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>A Little Birthday Surprise</title>
+    <meta name="theme-color" content="#1a0b2e" />
+
+    <!-- Google Fonts: Playfair Display (headings), Poppins (body), Dancing Script (handwriting) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Poppins:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="is-locked">
+    <!-- Background layers (particles + hearts are drawn here by JS) -->
+    <div class="bg-glow" aria-hidden="true"></div>
+    <canvas id="particles" aria-hidden="true"></canvas>
+    <div id="hearts-layer" aria-hidden="true"></div>
+    <canvas id="confetti" aria-hidden="true"></canvas>
+
+    <!-- ============ GATE: locked countdown shown before the birthday ============ -->
+    <!-- If opened before birthdayConfig.birthday, this is ALL the visitor sees. -->
+    <section id="gate" class="screen" aria-live="polite">
+      <div class="gate-inner">
+        <p class="script">Happy Birthday</p>
+        <h1 class="hero-title"><span data-name>FRIEND_NAME</span></h1>
+        <div class="countdown glass">
+          <p id="gate-countdown-title" class="countdown-title">
+            Your special day is almost here ❤️
+          </p>
+          <div id="gate-countdown-grid" class="countdown-grid">
+            <div class="time-box">
+              <span id="gate-days">00</span><small>Days</small>
+            </div>
+            <div class="time-box">
+              <span id="gate-hours">00</span><small>Hours</small>
+            </div>
+            <div class="time-box">
+              <span id="gate-minutes">00</span><small>Minutes</small>
+            </div>
+            <div class="time-box">
+              <span id="gate-seconds">00</span><small>Seconds</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TEASE: midnight wishes popup (shown once the date arrives) ============ -->
+    <div id="tease" class="modal-overlay" hidden>
+      <div class="modal-card glass">
+        <p class="modal-emoji" aria-hidden="true">🎉</p>
+        <h2 class="modal-title">
+          It's finally here, <span data-name>Sadhnn</span>!
+        </h2>
+        <p class="modal-wish">
+          Wishing you a year full of laughter, love, and every little thing that
+          makes you smile.
+        </p>
+        <button id="tease-continue" class="btn btn-glow" type="button">
+          Continue ✨
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ PROMISE: a playful question before the surprise opens ============ -->
+    <!-- "No" dodges away on hover/touch so it can never really be pressed. -->
+    <section id="promise" class="screen" hidden aria-live="polite">
+      <div class="promise-box">
+        <p class="promise-question">
+          Okay, one very serious question before we continue... 😄<br />Promise
+          you'll be my best friend forever, no backsies?
+        </p>
+        <div class="promise-actions">
+          <button id="promise-yes" class="btn btn-glow" type="button">
+            Yes, obviously ❤️
+          </button>
+          <button id="promise-no" class="btn btn-soft" type="button">No</button>
+        </div>
+        <p id="promise-hint" class="promise-hint" aria-live="polite">&nbsp;</p>
+      </div>
+    </section>
+
+    <!-- ============ SECTION 1: CINEMATIC OPENING ============ -->
+    <!-- Text uses {name}; JS replaces it with birthdayConfig.friendName. Starts only after "Yes" above. -->
+    <section id="opening" class="screen" hidden aria-live="polite">
+      <div class="opening-lines">
+        <p class="type-line big" data-text="Hey, {name}... ❤️"></p>
+        <p class="type-line" data-text="Today isn't just another day..."></p>
+        <p
+          class="type-line"
+          data-text="Because someone very special was born today."
+        ></p>
+      </div>
+      <div class="opening-cta" hidden>
+        <p class="ask">Are you ready for a little surprise?</p>
+        <button id="open-surprise" class="btn btn-glow" type="button">
+          Open Your Surprise ✨
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ SECTION 2: INTRO SEQUENCE (15–20 sec) ============ -->
+    <!-- Each line: data-start / data-end are seconds. Edit freely. -->
+    <section id="intro" class="screen" hidden aria-live="polite">
+      <div class="intro-stage">
+        <p class="intro-line" data-start="0" data-end="3">
+          Some people enter our lives...
+        </p>
+        <p class="intro-line" data-start="3" data-end="6">
+          ...and slowly become a beautiful part of our everyday life.
+        </p>
+        <p class="intro-line" data-start="6" data-end="10">
+          Some conversations become memories.
+        </p>
+        <p class="intro-line" data-start="10" data-end="13">
+          Some smiles become unforgettable.
+        </p>
+        <p class="intro-line" data-start="13" data-end="16">
+          And some people simply become...<br /><strong class="zoom-word"
+            >IMPORTANT.</strong
+          >
+        </p>
+        <p class="intro-line" data-start="16" data-end="20">
+          That's you, sadhnn. ❤️
+        </p>
+      </div>
+      <button id="skip-intro" class="btn-skip" type="button">Skip intro</button>
+    </section>
+
+    <!-- ============ FLOATING NAVIGATION (hidden until intro ends) ============ -->
+    <nav id="floating-nav" class="floating-nav" aria-label="Sections" hidden>
+      <a href="#home">Home</a>
+      <a href="#photos">Photos</a>
+      <a href="#memories">Memories</a>
+      <a href="#message">Message</a>
+      <a href="#surprise">Surprise</a>
+    </nav>
+
+    <!-- ============ SECTION 8: MUSIC BUTTON ============ -->
+    <button
+      id="music-btn"
+      class="music-btn"
+      type="button"
+      aria-pressed="false"
+      aria-label="Play music"
+      hidden
+    >
+      <span class="music-icon" aria-hidden="true">🎵</span>
+      <span class="music-label">Music</span>
+    </button>
+    <audio
+      id="birthday-audio"
+      src="assets/music/birthday-music.mp3"
+      preload="none"
+      loop
+    ></audio>
+
+    <!-- ============ MAIN WEBSITE ============ -->
+    <main id="site" hidden>
+      <!-- HOME + SECTION 9: COUNTDOWN -->
+      <section id="home" class="section hero">
+        <p class="script">Happy Birthday</p>
+        <h1 class="hero-title"><span data-name>Sadhnn</span></h1>
+        <p class="hero-date">4 October 2026</p>
+
+        <div
+          id="countdown"
+          class="countdown glass"
+          role="timer"
+          aria-label="Countdown to birthday"
+        >
+          <p id="countdown-title" class="countdown-title">
+            Your special day is almost here ❤️
+          </p>
+          <div id="countdown-grid" class="countdown-grid">
+            <div class="time-box">
+              <span id="cd-days">00</span><small>Days</small>
+            </div>
+            <div class="time-box">
+              <span id="cd-hours">00</span><small>Hours</small>
+            </div>
+            <div class="time-box">
+              <span id="cd-minutes">00</span><small>Minutes</small>
+            </div>
+            <div class="time-box">
+              <span id="cd-seconds">00</span><small>Seconds</small>
+            </div>
+          </div>
+        </div>
+
+        <a class="scroll-hint" href="#photos" aria-label="Scroll to photos"
+          >↓</a
+        >
+      </section>
+
+      <!-- SECTION 3: PHOTO REVEAL -->
+      <section id="photos" class="section">
+        <h2 class="section-title reveal">Little Pieces of Happiness 📸</h2>
+
+        <!-- JS fills each src/caption from birthdayConfig. Keep data-index. -->
+        <div class="gallery">
+          <figure class="polaroid reveal" data-index="0">
+            <button
+              class="polaroid-btn"
+              type="button"
+              aria-label="Open photo 1"
+            >
+              <span class="polaroid-img"
+                ><img
+                  src="assets/photos/photo1.jpg"
+                  alt="Photo 1 of FRIEND_NAME"
+                  loading="lazy"
+              /></span>
+              <figcaption>That smile ❤️</figcaption>
+            </button>
+          </figure>
+          <figure class="polaroid reveal" data-index="1">
+            <button
+              class="polaroid-btn"
+              type="button"
+              aria-label="Open photo 2"
+            >
+              <span class="polaroid-img"
+                ><img
+                  src="assets/photos/photo2.jpg"
+                  alt="Photo 2 of FRIEND_NAME"
+                  loading="lazy"
+              /></span>
+              <figcaption>One beautiful memory.</figcaption>
+            </button>
+          </figure>
+          <figure class="polaroid reveal" data-index="2">
+            <button
+              class="polaroid-btn"
+              type="button"
+              aria-label="Open photo 3"
+            >
+              <span class="polaroid-img"
+                ><img
+                  src="assets/photos/photo3.jpg"
+                  alt="Photo 3 of FRIEND_NAME"
+                  loading="lazy"
+              /></span>
+              <figcaption>A moment worth keeping.</figcaption>
+            </button>
+          </figure>
+          <figure class="polaroid reveal" data-index="3">
+            <button
+              class="polaroid-btn"
+              type="button"
+              aria-label="Open photo 4"
+            >
+              <span class="polaroid-img"
+                ><img
+                  src="assets/photos/photo4.jpg"
+                  alt="Photo 4 of FRIEND_NAME"
+                  loading="lazy"
+              /></span>
+              <figcaption>Just being you.</figcaption>
+            </button>
+          </figure>
+          <figure class="polaroid reveal" data-index="4">
+            <button
+              class="polaroid-btn"
+              type="button"
+              aria-label="Open photo 5"
+            >
+              <span class="polaroid-img"
+                ><img
+                  src="assets/photos/photo5.jpg"
+                  alt="Photo 5 of FRIEND_NAME"
+                  loading="lazy"
+              /></span>
+              <figcaption>Another little memory.</figcaption>
+            </button>
+          </figure>
+          <figure class="polaroid reveal" data-index="5">
+            <button
+              class="polaroid-btn"
+              type="button"
+              aria-label="Open photo 6"
+            >
+              <span class="polaroid-img"
+                ><img
+                  src="assets/photos/photo6.jpg"
+                  alt="Photo 6 of FRIEND_NAME"
+                  loading="lazy"
+              /></span>
+              <figcaption>Always unforgettable.</figcaption>
+            </button>
+          </figure>
+        </div>
+      </section>
+
+      <!-- SECTION 4: MEMORY TIMELINE (placeholders: replace with real memories) -->
+      <section id="memories" class="section">
+        <h2 class="section-title reveal">Little Moments, Big Memories ✨</h2>
+
+        <ol class="timeline">
+          <li class="memory glass reveal">
+            <span class="memory-tag">Memory 01</span>
+            <h3>03 0ct 2026 , Clg Campus</h3>
+
+            <!-- Optional photo: remove this line if you don't want one -->
+            <img
+              class="memory-photo"
+              src="assets/photos/photo7.jpg"
+              alt="Memory 01 photo"
+              loading="lazy"
+            />
+          </li>
+          <li class="memory glass reveal">
+            <span class="memory-tag">Memory 02</span>
+            <h3></h3>
+          </li>
+          <li class="memory glass reveal">
+            <span class="memory-tag">Memory 03</span>
+            <h3>12 march 2026 , varangaa</h3>
+
+            <img
+              class="memory-photo"
+              src="assets/photos/photo8.jpg"
+              alt="Memory 03 photo"
+              loading="lazy"
+            />
+          </li>
+          <li class="memory glass reveal">
+            <span class="memory-tag">Memory 04</span>
+          </li>
+          <li class="memory glass reveal">
+            <span class="memory-tag">Memory 05</span>
+            <h3>17 april 2026 , Cafe</h3>
+
+            <img
+              class="memory-photo"
+              src="assets/photos/photo9.jpg"
+              alt="Memory 05 photo"
+              loading="lazy"
+            />
+          </li>
+        </ol>
+      </section>
+
+      <!-- SECTION 5: SPECIAL MESSAGE -->
+      <section id="message" class="section">
+        <h2 class="section-title reveal">
+          Okay... now something from my heart.
+        </h2>
+
+        <article class="letter glass reveal">
+          <!-- Always-visible part -->
+          <p class="handwritten">
+            Life becomes a little more beautiful when you have someone with whom
+            you can laugh at stupid things, share random thoughts, and create
+            memories without even realizing how special those moments are.
+          </p>
+
+          <!-- Hidden part, revealed by "Read More". Personalize this in Step 6. -->
+          <div id="letter-more" class="letter-more" aria-hidden="true">
+            <div class="letter-more-inner">
+              <p class="handwritten">
+                Happy Birthdayyy बे! 🎂😂 Asich pagal ani dok khanari raha. Tu
+                kharach ek mast friend ahes! ❤️
+              </p>
+              <p class="handwritten">
+                Always happy raha, khup success milu de ani life full enjoy kar!
+                🥳✨
+              </p>
+              <p class="handwritten signature">— mii</p>
+            </div>
+          </div>
+
+          <button
+            id="read-more"
+            class="btn btn-soft"
+            type="button"
+            aria-expanded="false"
+            aria-controls="letter-more"
+          >
+            Read More ❤️
+          </button>
+        </article>
+      </section>
+
+      <!-- SECTION 6 + 7: SURPRISE + FINAL -->
+      <section id="surprise" class="section">
+        <button id="surprise-btn" class="btn btn-glow btn-large" type="button">
+          One Last Surprise 🎁
+        </button>
+
+        <!-- Hidden birthday card, revealed after click -->
+        <article id="birthday-card" class="birthday-card glass" hidden>
+          <h2 class="card-title">
+            Happy Birthday, <span data-name>FRIEND_NAME</span>! 🎂❤️
+          </h2>
+          <p class="card-wish">
+            May this year bring you countless reasons to smile,<br />
+            beautiful memories,<br />
+            peace in your heart,<br />
+            success in everything you dream about,<br />
+            and people who always remind you how special you are.
+          </p>
+          <p class="card-closing">
+            Keep smiling.<br />
+            Keep being yourself.<br />
+            And never forget how amazing you are.
+          </p>
+        </article>
+
+        <!-- Final surprise trigger (appears after the card) -->
+        <div id="final-teaser" class="final-teaser" hidden>
+          <p>Wait... there's one more thing.</p>
+          <button id="final-btn" class="btn btn-glow" type="button">
+            Click Me ❤️
+          </button>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <p>Made with ❤️ just for <span data-name>FRIEND_NAME</span></p>
+      </footer>
+    </main>
+
+    <!-- ============ SECTION 7: FINAL FULL-SCREEN REVEAL ============ -->
+    <section id="final" class="screen final-screen" hidden aria-live="polite">
+      <div class="final-stage">
+        <p class="final-line" data-delay="0">Happy Birthday, {name} ❤️</p>
+        <p class="final-line" data-delay="3">
+          Thank you for being one of the most beautiful parts of my journey.
+        </p>
+        <p class="final-line" data-delay="7">
+          Some people are temporary chapters...
+        </p>
+        <p class="final-line" data-delay="10">
+          ...but some become unforgettable pages.
+        </p>
+        <p class="final-line" data-delay="13">You are one of those pages. ❤️</p>
+        <p class="final-line final-last" data-delay="17">
+          Have the happiest birthday ever! 🎂✨
+        </p>
+      </div>
+      <button id="final-close" class="btn-skip" type="button" hidden>
+        Back to the website
+      </button>
+    </section>
+
+    <!-- ============ LIGHTBOX ============ -->
+    <div
+      id="lightbox"
+      class="lightbox"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo viewer"
+    >
+      <button
+        id="lb-close"
+        class="lb-btn lb-close"
+        type="button"
+        aria-label="Close photo"
+      >
+        ✕
+      </button>
+      <button
+        id="lb-prev"
+        class="lb-btn lb-prev"
+        type="button"
+        aria-label="Previous photo"
+      >
+        ‹
+      </button>
+      <figure class="lb-figure">
+        <img id="lb-img" src="" alt="" />
+        <figcaption id="lb-caption"></figcaption>
+      </figure>
+      <button
+        id="lb-next"
+        class="lb-btn lb-next"
+        type="button"
+        aria-label="Next photo"
+      >
+        ›
+      </button>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
